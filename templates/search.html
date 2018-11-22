@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Wyszukiwarka</title>
+    <style>
+         @import url('https://fonts.googleapis.com/css?family=Heebo:900');
+          @import url('https://fonts.googleapis.com/css?family=Lato:300');
+        #btn{
+            position: absolute;
+            top: calc(24% + 5px);
+            left: 46%;
+        }
+        #btn:hover{
+            cursor: pointer;
+        }
+        #text{
+            position: absolute;
+            top: 24%;
+            left: 10%;
+            width: 600px;
+            font-size: 32px;
+            border-radius: 0;
+            border: none;
+            border-bottom: black 1px solid;
+            padding: 10px;
+            font-family: 'Lato', sans-serif;
+        }
+        span{
+            position: absolute;
+            font-size: 40px;
+            font-family: 'Heebo', sans-serif;
+            top: 10%;
+            left: 10%;
+        }
+        #lem{
+            position: absolute;
+            font-size: 28px;
+            top: 36%;
+            left: 10%;
+            padding: 15px;
+            background-color: #f0f0f0;
+            border-radius: 30px;
+            color: #b4b4b4;
+            font-family: 'Lato', sans-serif;
+        }
+
+         #lem:hover{
+             color: #000000;
+             cursor: pointer;
+        }
+
+        #sw{
+            position: absolute;
+            font-size: 28px;
+            top: 36%;
+            left: 26%;
+            padding: 15px;
+            background-color: #f0f0f0;
+            border-radius: 30px;
+            width: 200px;
+            color: #b4b4b4;
+            font-family: 'Lato', sans-serif;
+        }
+        #sw:hover{
+            color: #000000;
+            cursor: pointer;
+        }
+
+        #stop-words{
+            position: absolute;
+            top: 38%;
+            left: 36%;
+            font-size: 22px;
+            padding: 5px;
+            width: 40px;
+            background-color: #f0f0f0;
+            border: none;
+            font-family: 'Lato', sans-serif;
+            border-bottom: #000000 1px solid;
+        }
+
+        #result{
+            position: absolute;
+            font-size: 20px;
+            top: 44%;
+            left: 10%;
+            padding: 10px;
+            font-family: 'Lato', sans-serif;
+        }
+
+        #result p{
+            padding: 10px;
+        }
+
+        #result p:hover{
+            background-color: #dcdcdc;
+            cursor: pointer;
+
+        }
+    </style>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script>
+        $(function() {
+            function createParagraph(doc, weight){
+
+                link = "https://pl.wikipedia.org/wiki/" + doc.replace(".txt", '');
+                doc = doc.replace(".txt", '').replace("%c5%82", 'ł').replace("%c4%85", 'ą').replace("%c4%87", 'ć');
+                doc = doc.replace("%c4%99", 'ę').replace("%c5%84", 'ń').replace("%c3%b3", 'ó').replace("%c5%9b", 'ś');
+                doc = doc.replace("%c5%ba", 'ź').replace("%c5%bc", 'ż');
+                title = doc.split("_").join(" ");
+
+                p = "<p id= '"+link+"'>";
+                p += title.toUpperCase() + "<b> " + weight + " </b><br />";
+                p += link;
+                p += "</p>";
+                return p;
+
+            }
+
+
+
+            do_lemmatization = 0;
+            do_kip_stop_words = false;
+            $("#stop-words").val(0);
+            $("#stop-words").hide();
+
+            $("#lem").click(function () {
+               if(do_lemmatization === 0){
+                   do_lemmatization = 1;
+                   $("#lem").css("color", "#000000");
+               } else {
+                   do_lemmatization = 0;
+                   $("#lem").css("color", "#b5b5b5");
+               }
+            });
+
+            $("#sw").click(function () {
+               if(!do_kip_stop_words){
+                   do_kip_stop_words = !do_kip_stop_words;
+                   $("#sw").css("color", "#000000");
+                   $("#stop-words").show();
+
+               } else {
+                   do_kip_stop_words = !do_kip_stop_words;
+                   $("#sw").css("color", "#b5b5b5");
+                   $("#stop-words").val(0);
+                   $("#stop-words").hide();
+               }
+            });
+
+
+            $('#btn').click(function() {
+                $("#result").html('');
+                $.ajax({
+                    url: '/searching',
+                    data: {opt: 1, text: $("#text").val(), lemat: do_lemmatization, stop: $("#stop-words").val()},
+                    type: 'POST',
+                    dataType: 'json',
+                    success: function(response) {
+                        console.log(response);
+                        $.each( response, function( index, value ) {
+                            $("#result").append(createParagraph(index, value));
+                        });
+                        $("p").click(function (event) {
+                            window.open(
+                              event.target.id,
+                              '_blank' // <- This is what makes it open in a new window.
+                            );
+                        });
+                    },
+                    error: function(error) {
+                        console.log(error);
+                    }
+                });
+            });
+
+
+        });
+    </script>
+</head>
+<body>
+
+
+    <div id="content">
+        <span>Wyszukaj: </span>
+        <input id="text" type="text" name="fname">
+        <img src="https://cdn2.iconfinder.com/data/icons/ios-7-icons/50/search-48.png" id="btn">
+        <div id="lem">lematyzowanie</div>
+        <div id="sw">stop słowa </div><input id="stop-words" type="text">
+
+    </div>
+
+    <div id="result">
+
+
+    </div>
+</body>
+</html>
